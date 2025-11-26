@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Планировщик питания</title>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+* {margin:0;padding:0;box-sizing:border-box;}
+body {font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;background-color:#f5f7fb;color:#1f2937;}
+.container {max-width:1280px;margin:0 auto;padding:32px;min-height:100vh;}
+.header {display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;}
+h1{font-size:2rem;font-weight:bold;color:#111827;}
+h2{font-size:1.5rem;font-weight:600;margin-bottom:16px;}
+h3{font-size:1.125rem;font-weight:600;margin-bottom:8px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.2s;}
+.btn-green{background-color:#10b981;color:white;}
+.btn-green:hover{background-color:#059669;}
+.btn-orange{background-color:#f97316;color:white;}
+.btn-orange:hover{background-color:#ea580c;}
+.btn-purple{background-color:#8b5cf6;color:white;}
+.btn-purple:hover{background-color:#7c3aed;}
+.btn-small{padding:4px 8px;font-size:12px;}
+.btn-gray{background-color:#e5e7eb;color:#374151;}
+.btn-gray:hover{background-color:#d1d5db;}
+.btn-red{background-color:transparent;color:#ef4444;padding:4px;}
+.btn-red:hover{background-color:#fee2e2;}
+.grid-2{display:grid;grid-template-columns:1fr;gap:24px;margin-bottom:32px;}
+@media (min-width:1024px){.grid-2{grid-template-columns:1fr 1fr;}}
+.card{background:white;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);padding:24px;transition:transform 0.2s;}
+.card:hover{transform:translateY(-2px);}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.orange{color:#f97316;}
+.green{color:#10b981;}
+.blue{color:#3b82f6;}
+.purple{color:#8b5cf6;}
+.form-box{padding:16px;border-radius:8px;margin-bottom:16px;border:2px solid;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.form-orange{background-color:#fff7ed;border-color:#fed7aa;}
+.form-green{background-color:#f0fdf4;border-color:#bbf7d0;}
+input, select{width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;}
+.input-group{display:flex;gap:8px;margin-bottom:8px;}
+.input-flex{flex:1;}
+.input-small{width:100px;}
+.meal-card{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;position:relative;transition:background 0.2s;}
+.meal-card:hover{background:#f9fafb;}
+.meal-card h3{padding-right:64px;}
+.delete-btn{position:absolute;top:10px;right:10px;}
+.ingredient-list{font-size:14px;color:#4b5563;margin-top:8px;}
+.ingredient-list p{font-weight:500;margin-bottom:6px;}
+.ingredient-list ul{list-style:disc;padding-left:24px;}
+.ingredient-list li{margin-bottom:4px;}
+table{width:100%;border-collapse:collapse;margin-top:16px;}
+th,td{border:1px solid #d1d5db;padding:12px;text-align:left;}
+th{background-color:#f3f4f6;font-weight:600;}
+tr:hover{background-color:#f9fafb;}
+.shopping-list{border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-top:16px;}
+.shopping-item{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;font-weight:500;}
+.info-box{margin-top:24px;padding:16px;background-color:#dbeafe;border-radius:8px;}
+.info-box h3{font-weight:600;margin-bottom:8px;}
+.info-box ol{list-style:decimal;padding-left:24px;font-size:14px;}
+.info-box li{margin-bottom:4px;}
+.mb-3{margin-bottom:12px;}
+.mt-3{margin-top:12px;}
+.text-gray{color:#6b7280;}
+.text-center{text-align:center;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const initialBreakfasts = [
+  {
+    id: 1,
+    name: "Шарлотка",
+    ingredients: [
+      { name: "Яблоки", amount: "600г" },
+      { name: "Яйца", amount: "4 шт" },
+      { name: "Мука", amount: "160г" },
+      { name: "Сахар", amount: "160г" }
+    ]
+  },
+  {
+    id: 2,
+    name: "Сырники",
+    ingredients: [
+      { name: "Творог", amount: "400г" },
+      { name: "Яйца", amount: "2 шт" },
+      { name: "Мука", amount: "60г" },
+      { name: "Сахар", amount: "30г" },
+      { name: "Масло", amount: "20г" }
+    ]
+  },
+  {
+    id: 3,
+    name: "Овсяная каша",
+    ingredients: [
+      { name: "Овсяные хлопья", amount: "100г" },
+      { name: "Молоко", amount: "300мл" },
+      { name: "Сахар", amount: "100гр" }
+    ]
+  },
+  {
+    id: 4,
+    name: "Английский завтрак",
+    ingredients: [
+      { name: "Яйца", amount: "5 шт" },
+      { name: "Бекон", amount: "100г" },
+      { name: "Помидоры Черри", amount: "100г" },
+      { name: "Хлеб", amount: "2 ломтя" },
+      { name: "Фасоль", amount: "0.5" },
+      { name: "Зелень", amount: "1" }
+    ]
+  },
+  {
+    id: 5,
+    name: "Сэндвичи",
+    ingredients: [
+      { name: "Хлеб", amount: "8 ломтя" },
+      { name: "Сыр Чизбургер", amount: "1 уп" },
+      { name: "Ветчина", amount: "1 уп" },
+      { name: "Огурцы", amount: "1 шт" },
+      { name: "Салат", amount: "1 шт" },
+      { name: "Сыр Маасдам", amount: "1 уп" },
+      { name: "Какая-то мясная нарезка", amount: "1 уп" }
+    ]
+  },
+  {
+    id: 6,
+    name: "Панкейки",
+    ingredients: [
+      { name: "Мука", amount: "200г" },
+      { name: "Яйца", amount: "2 шт" },
+      { name: "Молоко", amount: "200мл" },
+      { name: "Сахар", amount: "40г" },
+      { name: "Масло", amount: "20г" }
+    ]
+  },
+  {
+    id: 7,
+    name: "Блинчики",
+    ingredients: [
+      { name: "Мука", amount: "200г" },
+      { name: "Яйца", amount: "3 шт" },
+      { name: "Молоко", amount: "500мл" },
+      { name: "Сахар", amount: "30г" },
+      { name: "Масло", amount: "30г" }
+    ]
+  },
+  {
+    id: 8,
+    name: "Рисовая каша",
+    ingredients: [
+      { name: "Рис", amount: "100г" },
+      { name: "Молоко", amount: "300мл" },
+      { name: "Сахар", amount: "20г" },
+      { name: "Сливочное масло", amount: "10г" }
+    ]
+  },
+  {
+    id: 9,
+    name: "Творожная запеканка",
+    ingredients: [
+      { name: "Творог", amount: "500г" },
+      { name: "Яйца", amount: "4 шт" },
+      { name: "Сахар", amount: "40г" },
+      { name: "Манка", amount: "80г" }
+    ]
+  },
+  {
+    id: 10,
+    name: "Бутерброды с красной рыбкой",
+    ingredients: [
+      { name: "Хлеб", amount: "8 ломтя" },
+      { name: "Красная рыба", amount: "200г" },
+      { name: "Масло", amount: "10г" },
+      { name: "Огурец", amount: "1шт" },
+      { name: "Творожный сыр", amount: "1уп" }
+    ]
+  }
+];
+
+const initialLunchDinner = [
+  {
+    id: 1,
+    name: "Гречка со свининой",
+    ingredients: [
+      { name: "Гречка", amount: "200г" },
+      { name: "Свинина", amount: "300г" },
+      { name: "Лук", amount: "100г" },
+      { name: "Морковь", amount: "100г" }
+    ]
+  },
+  {
+    id: 2,
+    name: "Шурпа",
+    ingredients: [
+      { name: "Говядина", amount: "400г" },
+      { name: "Картофель", amount: "200г" },
+      { name: "Морковь", amount: "100г" },
+      { name: "Лук", amount: "100г" },
+      { name: "Красный перец", amount: "100г" },
+      { name: "Бешбармак", amount: "50г" }
+    ]
+  },
+  {
+    id: 3,
+    name: "Картошка в духовке с курицей",
+    ingredients: [
+      { name: "Картофель", amount: "400г" },
+      { name: "Курица(голень)", amount: "600г" },
+      { name: "Масло", amount: "20г" }
+    ]
+  },
+  {
+    id: 4,
+    name: "Куриный суп",
+    ingredients: [
+      { name: "Курица(голень)", amount: "400г" },
+      { name: "Картофель", amount: "200г" },
+      { name: "Морковь", amount: "100г" },
+      { name: "Вермишель", amount: "50г" }
+    ]
+  },
+  {
+    id: 5,
+    name: "Харчо",
+    ingredients: [
+      { name: "Говядина", amount: "200г" },
+      { name: "Рис", amount: "100г" },
+      { name: "Лук", amount: "100г" },
+      { name: "Томат", amount: "50г" },
+      { name: "Набор для харчо", amount: "1 шт" },
+      { name: "Картофель", amount: "100г" }
+    ]
+  },
+  {
+    id: 6,
+    name: "Котлеты с картошкой",
+    ingredients: [
+      { name: "Свинина", amount: "300г" },
+      { name: "Картофель", amount: "500г" },
+      { name: "Лук", amount: "50г" },
+      { name: "Говядина", amount: "200г" }
+    ]
+  },
+  {
+    id: 7,
+    name: "Говядина с лапшой(вок)",
+    ingredients: [
+      { name: "Говядина", amount: "400г" },
+      { name: "Лапша", amount: "100г" },
+      { name: "Красный перец", amount: "100г" },
+      { name: "Стручковая фасоль", amount: "50г" }
+    ]
+  },
+  {
+    id: 8,
+    name: "Болоньезе",
+    ingredients: [
+      { name: "Свинина", amount: "200г" },
+      { name: "Макароны", amount: "100г" },
+      { name: "Томатная паста", amount: "50г" },
+      { name: "Лук", amount: "1шт" },
+      { name: "Говядина", amount: "100г" },
+      { name: "Морковь", amount: "1шт" }
+    ]
+  },
+  {
+    id: 9,
+    name: "Крабовый салат",
+    ingredients: [
+      { name: "Крабовое мясо", amount: "150г" },
+      { name: "Яйцо", amount: "2 шт" },
+      { name: "Майонез", amount: "20г" },
+      { name: "Рис", amount: "30г" },
+      { name: "Кукуруза", amount: "1 банка" }
+    ]
+  },
+  {
+    id: 10,
+    name: "Тушеная картошка со свининой",
+    ingredients: [
+      { name: "Картофель", amount: "300г" },
+      { name: "Свинина", amount: "300г" },
+      { name: "Лук", amount: "100г" },
+      { name: "Морковь ", amount: "100г" }
+    ]
+  },
+  {
+    id: 12,
+    name: "Тушенка с макаронами",
+    ingredients: [
+      { name: "Тушенка", amount: "1 банка" },
+      { name: "Макароны", amount: "100г" }
+    ]
+  },
+  {
+    id: 13,
+    name: "Сосиски с макаронами",
+    ingredients: [
+      { name: "Сосиски", amount: "200г" },
+      { name: "Макароны", amount: "100г" }
+    ]
+  },
+  {
+    id: 14,
+    name: "Рис со свининой",
+    ingredients: [
+      { name: "Рис", amount: "150г" },
+      { name: "Свинина", amount: "300г" },
+      { name: "Лук", amount: "100г" },
+      { name: "Морковь", amount: "1 шт" },
+      { name: "Устричный соус", amount: "1 шт" }
+    ]
+  },
+  {
+    id: 15,
+    name: "Гуляш с макаронами",
+    ingredients: [
+      { name: "Говядина", amount: "300г" },
+      { name: "Макароны", amount: "100г" },
+      { name: "Лук", amount: "50г" },
+      { name: "Морковь", amount: "1шт" }
+    ]
+  },
+  {
+    id: 16,
+    name: "Рыбный суп",
+    ingredients: [
+      { name: "Рыбная консерва", amount: "300г" },
+      { name: "Картофель", amount: "150г" },
+      { name: "Морковь", amount: "50г" },
+      { name: "Рис", amount: "50г" }
+    ]
+  },
+  {
+    id: 17,
+    name: "Жареная рыба с пюре",
+    ingredients: [
+      { name: "Рыба", amount: "500г" },
+      { name: "Картофель", amount: "500г" },
+      { name: "Масло", amount: "20г" },
+      { name: "Яйцо", amount: "1шт" },
+      { name: "Молоко", amount: "100мл" }
+    ]
+  },
+  {
+    id: 18,
+    name: "Брокколи с говядиной",
+    ingredients: [
+      { name: "Брокколи", amount: "400г" },
+      { name: "Говядина", amount: "300г" },
+      { name: "Масло", amount: "10г" },
+      { name: "Устричный соус", amount: "1 шт" }
+    ]
+  },
+  {
+    id: 19,
+    name: "Ежики в духовке с картошкой",
+    ingredients: [
+      { name: "Фарш", amount: "300г" },
+      { name: "Картофель", amount: "400г" },
+      { name: "Масло", amount: "20г" },
+      { name: "Лук", amount: "1шт" },
+      { name: "Рис", amount: "50гр" }
+    ]
+  }
+];
+
+const MealPlanner = () => {
+    const [breakfasts,setBreakfasts] = useState(initialBreakfasts);
+    const [lunchDinner,setLunchDinner] = useState(initialLunchDinner);
+    const [weekPlan,setWeekPlan] = useState([
+        {day:'Понедельник',breakfast:null,lunch:null,dinner:null},
+        {day:'Вторник',breakfast:null,lunch:null,dinner:null},
+        {day:'Среда',breakfast:null,lunch:null,dinner:null},
+        {day:'Четверг',breakfast:null,lunch:null,dinner:null},
+        {day:'Пятница',breakfast:null,lunch:null,dinner:null},
+        {day:'Суббота',breakfast:null,lunch:null,dinner:null},
+        {day:'Воскресенье',breakfast:null,lunch:null,dinner:null},
+    ]);
+    const [showShoppingList,setShowShoppingList] = useState(false);
+    const [showBreakfastForm,setShowBreakfastForm] = useState(false);
+    const [showLunchDinnerForm,setShowLunchDinnerForm] = useState(false);
+    const [newMeal,setNewMeal] = useState({name:'',ingredients:[{name:'',amount:''}]});
+    const [editingMeal,setEditingMeal] = useState(null);
+    const [showBreakfasts, setShowBreakfasts] = useState(true);
+const [showLunchDinnerList, setShowLunchDinnerList] = useState(true);
+
+    useEffect(()=>{
+        const savedBreakfasts = localStorage.getItem('breakfasts');
+        const savedLunchDinner = localStorage.getItem('lunchDinner');
+        const savedWeekPlan = localStorage.getItem('weekPlan');
+        if(savedBreakfasts) setBreakfasts(JSON.parse(savedBreakfasts));
+        if(savedLunchDinner) setLunchDinner(JSON.parse(savedLunchDinner));
+        if(savedWeekPlan) setWeekPlan(JSON.parse(savedWeekPlan));
+    },[]);
+
+    const saveData = ()=>{
+        localStorage.setItem('breakfasts',JSON.stringify(breakfasts));
+        localStorage.setItem('lunchDinner',JSON.stringify(lunchDinner));
+        localStorage.setItem('weekPlan',JSON.stringify(weekPlan));
+        alert('Данные сохранены!');
+    };
+
+    const addIngredient = ()=>{setNewMeal({...newMeal,ingredients:[...newMeal.ingredients,{name:'',amount:''}]});};
+    const updateIngredient = (i,f,v)=>{const ing=[...newMeal.ingredients];ing[i][f]=v;setNewMeal({...newMeal,ingredients:ing});};
+    const removeIngredient = i=>{setNewMeal({...newMeal,ingredients:newMeal.ingredients.filter((_,idx)=>idx!==i)});};
+    const saveMeal = type=>{
+        if(!newMeal.name.trim()){alert('Введите название блюда');return;}
+        const validIng = newMeal.ingredients.filter(ing=>ing.name.trim() && ing.amount.trim());
+        if(validIng.length===0){alert('Добавьте хотя бы один ингредиент');return;}
+        if(editingMeal){
+            if(editingMeal.type==='breakfast') setBreakfasts(breakfasts.map(m=>m.id===editingMeal.id?{...newMeal,id:editingMeal.id}:m));
+            else setLunchDinner(lunchDinner.map(m=>m.id===editingMeal.id?{...newMeal,id:editingMeal.id}:m));
+            setEditingMeal(null);
+        } else {
+            const newId = type==='breakfast'?Math.max(...breakfasts.map(m=>m.id),0)+1:Math.max(...lunchDinner.map(m=>m.id),0)+1;
+            const meal={...newMeal,id:newId};
+            type==='breakfast'?setBreakfasts([...breakfasts,meal]):setLunchDinner([...lunchDinner,meal]);
+        }
+        setNewMeal({name:'',ingredients:[{name:'',amount:''}]});
+        setShowBreakfastForm(false);setShowLunchDinnerForm(false);
+    };
+    const deleteMeal = (id,type)=>{if(confirm('Удалить это блюдо?')){type==='breakfast'?setBreakfasts(breakfasts.filter(m=>m.id!==id)):setLunchDinner(lunchDinner.filter(m=>m.id!==id));}};
+    const editMeal = (meal,type)=>{setNewMeal({...meal});setEditingMeal({id:meal.id,type});type==='breakfast'?setShowBreakfastForm(true):setShowLunchDinnerForm(true);};
+    const updateMeal = (dayIdx,mealType,mealId)=>{const np=[...weekPlan];np[dayIdx][mealType]=mealId;setWeekPlan(np);};
+
+    const calculateShoppingList = ()=>{
+        const ingredients={};
+        weekPlan.forEach(day=>{['breakfast','lunch','dinner'].forEach(mt=>{
+            const mealId=day[mt];if(mealId){
+                const meal=mt==='breakfast'?breakfasts.find(m=>m.id===mealId):lunchDinner.find(m=>m.id===mealId);
+                if(meal) meal.ingredients.forEach(ing=>{
+                    if(ing.name in ingredients){const cA=ingredients[ing.name];const n=parseInt(ing.amount.replace(/\D/g,''));const c=parseInt(cA.replace(/\D/g,''));const unit=ing.amount.replace(/\d+/,'').trim();ingredients[ing.name]=`${c+n}${unit}`;}
+                    else ingredients[ing.name]=ing.amount;
+                });
+            }
+        });});
+        return ingredients;
+    };
+
+    const shoppingList = calculateShoppingList();
+    const clearAll = () => {
+    if (!confirm('Очистить все поля и очистить данные?')) return;
+
+    // Очищаем календарь
+    setWeekPlan([
+        {day:'Понедельник',breakfast:null,lunch:null,dinner:null},
+        {day:'Вторник',breakfast:null,lunch:null,dinner:null},
+        {day:'Среда',breakfast:null,lunch:null,dinner:null},
+        {day:'Четверг',breakfast:null,lunch:null,dinner:null},
+        {day:'Пятница',breakfast:null,lunch:null,dinner:null},
+        {day:'Суббота',breakfast:null,lunch:null,dinner:null},
+        {day:'Воскресенье',breakfast:null,lunch:null,dinner:null},
+    ]);
+
+    // Чистим localStorage
+    localStorage.removeItem('weekPlan');
+
+    alert('Календарь очищен!');
+};
+
+    return (
+        <div className="container">
+            <div className="header">
+                <h1>Планировщик питания</h1>
+                <button onClick={saveData} className="btn btn-green">💾 Сохранить всё</button>
+            </div>
+
+            <div className="grid-2">
+                {/* Завтраки */}
+                <div className="card">
+                    <div className="card-header">
+                        <h2 className="orange">Завтраки</h2>
+                        <button onClick={()=>setShowBreakfastForm(!showBreakfastForm)} className="btn btn-orange btn-small">+ Добавить</button>
+                        <button 
+    onClick={() => setShowBreakfasts(!showBreakfasts)} 
+    className="btn btn-gray btn-small"
+>
+    {showBreakfasts ? "▲ Свернуть" : "▼ Развернуть"}
+</button>
+                    </div>
+
+                    {showBreakfastForm && (
+                        <div className="form-box form-orange">
+                            <input type="text" placeholder="Название блюда" value={newMeal.name}
+                                onChange={(e)=>setNewMeal({...newMeal,name:e.target.value})} className="mb-3"/>
+                            {newMeal.ingredients.map((ing,idx)=>(
+                                <div key={idx} className="input-group">
+                                    <input type="text" placeholder="Ингредиент" value={ing.name}
+                                        onChange={(e)=>updateIngredient(idx,'name',e.target.value)} className="input-flex"/>
+                                    <input type="text" placeholder="Кол-во" value={ing.amount}
+                                        onChange={(e)=>updateIngredient(idx,'amount',e.target.value)} className="input-small"/>
+                                    <button onClick={()=>removeIngredient(idx)} className="btn btn-red">✕</button>
+                                </div>
+                            ))}
+                            <div className="input-group mt-3">
+                                <button onClick={addIngredient} className="btn btn-small btn-gray">+ Ингредиент</button>
+                                <button onClick={()=>saveMeal('breakfast')} className="btn btn-small btn-orange">Сохранить</button>
+                                <button onClick={()=>{
+                                    setShowBreakfastForm(false);
+                                    setNewMeal({name:'',ingredients:[{name:'',amount:''}]});
+                                    setEditingMeal(null);
+                                }} className="btn btn-small btn-gray">Отмена</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {showBreakfasts && breakfasts.map(meal => (
+                        <div key={meal.id} className="meal-card">
+                            <button onClick={()=>deleteMeal(meal.id,'breakfast')} className="btn btn-red delete-btn">🗑️</button>
+                            <button onClick={()=>editMeal(meal,'breakfast')} className="btn btn-gray btn-small" style={{position:'absolute', top:'10px', right:'50px'}}>✏️</button>
+                            <h3>{meal.name}</h3>
+                            <div className="ingredient-list">
+                                {meal.ingredients.length>0 && <>
+                                <p>Ингредиенты (2 порции):</p>
+                                <ul>{meal.ingredients.map((ing,idx)=><li key={idx}>{ing.name} - {ing.amount}</li>)}</ul>
+                                </>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Обеды/Ужины */}
+                <div className="card">
+                    <div className="card-header">
+                        <h2 className="green">Обеды/Ужины</h2>
+                        <button onClick={()=>setShowLunchDinnerForm(!showLunchDinnerForm)} className="btn btn-green btn-small">+ Добавить</button>
+                        <button 
+    onClick={() => setShowLunchDinnerList(!setShowLunchDinnerList)} 
+    className="btn btn-gray btn-small"
+>
+    {showLunchDinnerList ? "▲ Свернуть" : "▼ Развернуть"}
+</button>
+                    </div>
+
+                    {showLunchDinnerForm && (
+                        <div className="form-box form-green">
+                            <input type="text" placeholder="Название блюда" value={newMeal.name}
+                                onChange={(e)=>setNewMeal({...newMeal,name:e.target.value})} className="mb-3"/>
+                            {newMeal.ingredients.map((ing,idx)=>(
+                                <div key={idx} className="input-group">
+                                    <input type="text" placeholder="Ингредиент" value={ing.name}
+                                        onChange={(e)=>updateIngredient(idx,'name',e.target.value)} className="input-flex"/>
+                                    <input type="text" placeholder="Кол-во" value={ing.amount}
+                                        onChange={(e)=>updateIngredient(idx,'amount',e.target.value)} className="input-small"/>
+                                    <button onClick={()=>removeIngredient(idx)} className="btn btn-red">✕</button>
+                                </div>
+                            ))}
+                            <div className="input-group mt-3">
+                                <button onClick={addIngredient} className="btn btn-small btn-gray">+ Ингредиент</button>
+                                <button onClick={()=>saveMeal('lunchDinner')} className="btn btn-small btn-green">Сохранить</button>
+                                <button onClick={()=>{
+                                    setShowLunchDinnerForm(false);
+                                    setNewMeal({name:'',ingredients:[{name:'',amount:''}]});
+                                    setEditingMeal(null);
+                                }} className="btn btn-small btn-gray">Отмена</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {showLunchDinnerList && lunchDinner.map(meal => (
+                        <div key={meal.id} className="meal-card">
+                            <button onClick={()=>deleteMeal(meal.id,'lunchDinner')} className="btn btn-red delete-btn">🗑️</button>
+                            <button onClick={()=>editMeal(meal,'lunchDinner')} className="btn btn-gray btn-small" style={{position:'absolute', top:'10px', right:'50px'}}>✏️</button>
+                            <h3>{meal.name}</h3>
+                            <div className="ingredient-list">
+                                {meal.ingredients.length>0 && <>
+                                <p>Ингредиенты (2 порции):</p>
+                                <ul>{meal.ingredients.map((ing,idx)=><li key={idx}>{ing.name} - {ing.amount}</li>)}</ul>
+                                </>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* План недели */}
+            <div className="card">
+                <h2 className="blue">План недели</h2>
+                <button onClick={clearAll} className="btn btn-red btn-small" style={{ marginBottom: '15px' }}>
+    🧹 Очистить всё
+</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>День</th>
+                            <th>Завтрак</th>
+                            <th>Обед</th>
+                            <th>Ужин</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {weekPlan.map((day,dayIndex)=>(
+                            <tr key={day.day}>
+                                <td>{day.day}</td>
+                                <td>
+                                    <select value={day.breakfast||''} onChange={e=>updateMeal(dayIndex,'breakfast',Number(e.target.value))}>
+                                        <option value="">—</option>
+                                        {breakfasts.map(meal=><option key={meal.id} value={meal.id}>{meal.name}</option>)}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select value={day.lunch||''} onChange={e=>updateMeal(dayIndex,'lunch',Number(e.target.value))}>
+                                        <option value="">—</option>
+                                        {lunchDinner.map(meal=><option key={meal.id} value={meal.id}>{meal.name}</option>)}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select value={day.dinner||''} onChange={e=>updateMeal(dayIndex,'dinner',Number(e.target.value))}>
+                                        <option value="">—</option>
+                                        {lunchDinner.map(meal=><option key={meal.id} value={meal.id}>{meal.name}</option>)}
+                                    </select>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Список покупок */}
+            <div className="card mt-3">
+                <div className="card-header">
+                    <h2 className="purple">Список покупок</h2>
+                    <button onClick={()=>setShowShoppingList(!showShoppingList)} className="btn btn-purple btn-small">
+                        {showShoppingList?'Скрыть':'Показать'}
+                    </button>
+                </div>
+                {showShoppingList && (
+                    <div className="shopping-list">
+                        {Object.keys(shoppingList).length===0 ? (
+                            <p className="text-gray text-center">Выберите блюда на неделю, чтобы сформировать список покупок.</p>
+                        ) : (
+                            Object.entries(shoppingList).map(([name,amount],idx)=>(
+                                <div key={idx} className="shopping-item">
+                                    <span>{name}</span>
+                                    <span>{amount}</span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<MealPlanner />);
+</script>
+</body>
+</html>
